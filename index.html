@@ -5,11 +5,11 @@
     @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 
     :root {
-      --bg: rgba(0, 0, 0, 0.45); 
       --neon: #00ff41;           
       --neon-dim: rgba(0, 255, 65, 0.3);
       --danger: #ff003c;
-      --cyan: #00e5ff; /* Adding a secondary color for the timer */
+      --cyan: #00e5ff; 
+      --cyan-dim: rgba(0, 229, 255, 0.2);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -27,149 +27,140 @@
     ::-webkit-scrollbar-track { background: rgba(0, 255, 65, 0.1); }
     ::-webkit-scrollbar-thumb { background: var(--neon); border-radius: 3px; }
 
-    /* --- THE WIDGET BASE --- */
+    /* --- BASE WIDGET CONTAINER --- */
     #widget {
-      background: var(--bg);
-      backdrop-filter: blur(12px);         
-      -webkit-backdrop-filter: blur(12px); 
-      border: 1px solid rgba(0, 255, 65, 0.3); 
-      box-shadow: 0 0 15px rgba(0, 255, 65, 0.2), inset 0 0 10px rgba(0, 255, 65, 0.1);
-      border-radius: 8px;
+      background: transparent; 
       position: absolute;
-      bottom: 10px; 
-      right: 10px; 
-      width: 300px;
-      height: 380px;
-      display: flex;
-      flex-direction: column;
-      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    /* --- COLLAPSED STATE (THE ORB) --- */
-    #widget.collapsed {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      border: 2px solid var(--neon);
-      box-shadow: 0 0 20px var(--neon);
-    }
-
-    /* --- HOLOGRAPHIC JOYSTICK UI --- */
-    #core-container {
-      display: none;
-      width: 100%; height: 100%;
-      position: relative;
+      bottom: 10px; right: 10px; 
+      width: 320px; height: 420px;
+      display: flex; flex-direction: column;
       justify-content: center; align-items: center;
-      -webkit-app-region: drag; /* Outer edge drags the window */
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    
-    #widget.collapsed #core-container { display: flex; }
+
+    /* --- IDLE STATE (THE CORE) --- */
+    #widget.collapsed { width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--neon); box-shadow: 0 0 20px var(--neon); }
+    #widget.collapsed.dial-active { width: 150px; height: 150px; border: 2px solid var(--cyan); box-shadow: 0 0 30px var(--cyan); background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
+
+    /* Drag Ring & Core */
+    #omnitrix-casing { position: absolute; inset: 0; border: 15px solid rgba(0, 255, 65, 0.1); border-radius: 50%; -webkit-app-region: drag; z-index: 1; display: none; }
+    #widget.collapsed #omnitrix-casing { display: block; }
+    #widget.collapsed.dial-active #omnitrix-casing { display: none; }
+
+    #omnitrix-core {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 24px; height: 24px; border-radius: 50%; background: var(--neon); box-shadow: 0 0 15px var(--neon);
+      -webkit-app-region: no-drag; z-index: 10; cursor: pointer; display: none; pointer-events: auto; 
+    }
+    #widget.collapsed #omnitrix-core { display: block; }
+    #omnitrix-core:hover { transform: translate(-50%, -50%) scale(1.2); background: #fff; }
+    #widget.collapsed.dial-active #omnitrix-core { background: var(--cyan); box-shadow: 0 0 25px var(--cyan); transform: translate(-50%, -50%) scale(0.8); }
+
+    /* Dial Menu */
+    #dial-menu { position: absolute; inset: 0; z-index: 5; display: none; flex-direction: column; border-radius: 50%; overflow: hidden; animation: spin-in 0.3s ease-out forwards; }
+    #widget.collapsed.dial-active #dial-menu { display: flex; }
+    @keyframes spin-in { 0% { transform: rotate(-90deg) scale(0.5); opacity: 0; } 100% { transform: rotate(0deg) scale(1); opacity: 1; } }
+
+    .quadrant { flex: 1; display: flex; justify-content: center; align-items: center; font-size: 14px; font-weight: bold; color: rgba(255,255,255,0.7); transition: 0.2s; border: 1px solid rgba(0, 229, 255, 0.2); -webkit-app-region: no-drag; cursor: pointer; }
+    .quadrant:hover { background: rgba(0, 229, 255, 0.3); color: var(--cyan); text-shadow: 0 0 10px var(--cyan); box-shadow: inset 0 0 20px var(--cyan); }
+
+    /* --- EXPANDED UI VIEWS --- */
+    #ui-content { width: 100%; height: 100%; display: none; flex-direction: column; }
     #widget.collapsed #ui-content { display: none; }
 
-    .solid-core {
-      -webkit-app-region: no-drag; 
-      pointer-events: auto; 
-      width: 24px; height: 24px;
-      background-color: var(--neon);
-      border-radius: 50%;
-      box-shadow: 0 0 15px var(--neon);
-      cursor: pointer;
-      transition: all 0.2s ease-in-out;
-      z-index: 10;
-    }
-    .solid-core:hover { transform: scale(1.15); }
-
-    /* The projected holograms that appear when you click and hold */
-    .hologram {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 10px;
-      font-weight: bold;
-      color: var(--cyan);
-      text-shadow: 0 0 5px var(--cyan);
-      opacity: 0;
-      transition: opacity 0.2s, transform 0.2s;
-      pointer-events: none;
-    }
-    #holo-top { top: -20px; }
-    #holo-bottom { bottom: -20px; }
-
-    /* When the user clicks and holds the core */
-    #core-container.gesturing .hologram { opacity: 1; }
-    #core-container.gesturing #holo-top { transform: translate(-50%, -10px); }
-    #core-container.gesturing #holo-bottom { transform: translate(-50%, 10px); }
-    #core-container.gesturing .solid-core { transform: scale(0.8); background-color: var(--cyan); box-shadow: 0 0 20px var(--cyan); }
-
-    /* --- EXPANDED UI --- */
-    #ui-content { flex: 1; display: flex; flex-direction: column; padding: 10px; overflow: hidden; }
-
-    #drag-bar {
-      -webkit-app-region: drag; 
-      background: rgba(0, 255, 65, 0.15);
-      padding: 8px 10px;
-      display: flex; justify-content: space-between;
-      border-bottom: 1px solid rgba(0, 255, 65, 0.3);
-    }
-    
-    .btn {
-      -webkit-app-region: no-drag; background: none; border: none;
-      color: var(--neon); cursor: pointer; font-family: inherit; font-weight: bold; transition: 0.2s;
-    }
-    .btn:hover { text-shadow: 0 0 8px var(--neon); }
-    .btn.close:hover { color: var(--danger); text-shadow: 0 0 8px var(--danger); }
-
-    /* View Switcher */
-    .view { display: none; flex-direction: column; flex: 1; overflow: hidden; margin-top: 10px; }
+    .view { display: none; width: 100%; height: 100%; flex-direction: column; }
     .view.active { display: flex; }
 
-    /* --- VIEW: TODO / NOTES --- */
-    #task-list { flex: 1; overflow-y: auto; list-style: none; padding-right: 5px; }
+    .btn { -webkit-app-region: no-drag; background: none; border: none; color: inherit; cursor: pointer; font-family: inherit; font-weight: bold; transition: 0.2s; }
+    .btn:hover { text-shadow: 0 0 8px currentColor; }
+
+    /* =========================================
+       VIEW 1: RECTANGULAR NOTES HUD 
+       ========================================= */
+    #drag-bar-notes {
+      -webkit-app-region: drag; background: rgba(0, 0, 0, 0.6); border-radius: 4px; padding: 8px 10px;
+      display: flex; justify-content: space-between; border: 1px solid var(--neon-dim); margin-bottom: 10px; color: var(--neon);
+    }
+    #drag-bar-notes .close-btn:hover { color: var(--danger); text-shadow: 0 0 8px var(--danger); }
+    
+    #task-list { flex: 1; overflow-y: auto; list-style: none; padding-right: 5px; background: rgba(0, 0, 0, 0.4); border-radius: 4px; padding: 10px; }
     #task-list li { padding: 5px 0; border-bottom: 1px dashed var(--neon-dim); word-wrap: break-word; cursor: crosshair; }
     #task-list li:hover { background: rgba(0, 255, 65, 0.1); }
     
-    textarea {
-      background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 65, 0.5);
-      color: var(--neon); font-family: inherit; resize: none; padding: 8px; outline: none; border-radius: 4px; margin-top:10px;
-    }
+    textarea { background: rgba(0, 0, 0, 0.6); border: 1px solid var(--neon-dim); color: var(--neon); font-family: inherit; resize: none; padding: 10px; outline: none; border-radius: 4px; margin-top:10px; }
     textarea:focus { box-shadow: 0 0 8px rgba(0, 255, 65, 0.4); border-color: var(--neon); }
+    
+    .status-bar { display: flex; justify-content: space-between; font-size: 12px; margin-top: 8px; background: rgba(0,0,0,0.6); padding: 5px 10px; border-radius: 4px; }
 
-    /* --- VIEW: TIMER --- */
-    #timer-display {
-      font-size: 48px; text-align: center; margin: auto 0;
-      color: var(--cyan); text-shadow: 0 0 15px var(--cyan);
-      letter-spacing: 2px;
+    /* =========================================
+       VIEW 2: CIRCULAR COUNTDOWN & CLOCK HUD
+       ========================================= */
+    #view-timer {
+      -webkit-app-region: drag; 
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 100%);
+      border: 2px solid var(--cyan-dim);
+      box-shadow: 0 0 30px rgba(0, 229, 255, 0.1);
+      position: relative;
+      align-items: center; justify-content: center;
+      color: var(--cyan);
     }
-    .timer-controls { display: flex; justify-content: space-around; margin-bottom: 20px; }
-    .btn-timer {
-      padding: 8px 15px; border: 1px solid var(--cyan); background: transparent; color: var(--cyan);
-      cursor: pointer; font-family: inherit; font-weight: bold; border-radius: 4px;
-    }
-    .btn-timer:hover { background: rgba(0, 229, 255, 0.2); box-shadow: 0 0 10px var(--cyan); }
 
-    .status-bar { display: flex; justify-content: space-between; font-size: 12px; margin-top: 8px; opacity: 0.8; }
+    .circle-controls { position: absolute; width: 100%; top: 25px; display: flex; justify-content: space-between; padding: 0 45px; z-index: 10; }
+    .circle-controls .btn:hover { color: var(--danger); }
+
+    .live-clock { position: absolute; top: 60px; text-align: center; -webkit-app-region: no-drag; }
+    #time-display { font-size: 24px; font-weight: bold; letter-spacing: 2px; text-shadow: 0 0 10px var(--cyan); }
+    #date-display { font-size: 10px; opacity: 0.8; letter-spacing: 1px; }
+
+    .timer-ring-container { position: relative; width: 180px; height: 180px; margin-top: 30px; display: flex; justify-content: center; align-items: center; }
+    .progress-ring { transform: rotate(-90deg); position: absolute; }
+    .progress-ring__track { stroke: var(--cyan-dim); }
+    .progress-ring__circle { 
+      stroke: var(--cyan); 
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1s linear; 
+    }
+
+    .timer-inner { position: absolute; text-align: center; -webkit-app-region: no-drag; z-index: 20; }
+    #timer-input { 
+      background: transparent; border: none; border-bottom: 1px dashed var(--cyan);
+      color: #fff; font-family: inherit; font-size: 28px; width: 60px; text-align: center; outline: none;
+    }
+    #timer-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .input-label { font-size: 10px; opacity: 0.7; margin-top: 5px; }
+    
+    #countdown-display { font-size: 36px; font-weight: bold; text-shadow: 0 0 15px var(--cyan); display: none; }
+
+    .timer-actions { position: absolute; bottom: 40px; display: flex; gap: 15px; -webkit-app-region: no-drag; z-index: 20; }
+    .action-btn { background: transparent; border: 1px solid var(--cyan); color: var(--cyan); padding: 5px 15px; border-radius: 20px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: bold; transition: 0.2s; }
+    .action-btn:hover { background: var(--cyan-dim); box-shadow: 0 0 10px var(--cyan); }
+
   </style>
 </head>
 <body>
 
   <div id="widget" class="collapsed">
     
-    <div id="core-container">
-      <div id="holo-top" class="hologram">[^] NOTES</div>
-      <div class="solid-core" id="main-core"></div>
-      <div id="holo-bottom" class="hologram">[v] TIMER</div>
+    <div id="omnitrix-casing"></div>
+    
+    <div id="dial-menu">
+      <div class="quadrant" onclick="openApp('notes')">NOTES</div>
+      <div class="quadrant" onclick="openApp('timer')">TIMER</div>
     </div>
 
-    <div id="ui-content">
-      <div id="drag-bar">
-        <span id="app-title">// SYS.NOTES</span>
-        <div>
-          <button class="btn" onclick="toggleCollapse()">[-]</button>
-          <button class="btn close" onclick="window.close()">[X]</button>
-        </div>
-      </div>
+    <div id="omnitrix-core" onclick="toggleDial()"></div>
 
-      <div id="view-notes" class="view active">
+    <div id="ui-content">
+
+      <div id="view-notes" class="view">
+        <div id="drag-bar-notes">
+          <span>// SYS.NOTES</span>
+          <div>
+            <button class="btn" onclick="toggleCollapse()">[-]</button>
+            <button class="btn close-btn" onclick="window.close()">[X]</button>
+          </div>
+        </div>
         <ul id="task-list"></ul>
         <textarea id="task-input" rows="2" placeholder="> input_data_"></textarea>
         <div class="status-bar">
@@ -179,76 +170,63 @@
       </div>
 
       <div id="view-timer" class="view">
-        <div id="timer-display">00:00.00</div>
-        <div class="timer-controls">
-          <button class="btn-timer" onclick="startTimer()">START</button>
-          <button class="btn-timer" onclick="stopTimer()">STOP</button>
-          <button class="btn-timer" onclick="resetTimer()">RESET</button>
+        
+        <div class="circle-controls">
+          <button class="btn" onclick="toggleCollapse()">[-]</button>
+          <button class="btn" onclick="window.close()">[X]</button>
         </div>
-        <div class="status-bar">
-          <span>// CHRONO_SYS</span>
-          <span style="color:var(--cyan)">STANDBY</span>
+
+        <div class="live-clock">
+          <div id="time-display">00:00 AM</div>
+          <div id="date-display">LOADING...</div>
         </div>
+
+        <div class="timer-ring-container">
+          <svg class="progress-ring" width="180" height="180">
+            <circle class="progress-ring__track" stroke-width="6" fill="transparent" r="84" cx="90" cy="90"/>
+            <circle class="progress-ring__circle" id="svg-ring" stroke-width="6" fill="transparent" r="84" cx="90" cy="90"/>
+          </svg>
+          
+          <div class="timer-inner">
+            <div id="setup-container">
+              <input type="number" id="timer-input" value="5" min="1" max="99">
+              <div class="input-label">MINUTES</div>
+            </div>
+            <div id="countdown-display">05:00</div>
+          </div>
+        </div>
+
+        <div class="timer-actions">
+          <button class="action-btn" onclick="startTimer()">START</button>
+          <button class="action-btn" onclick="resetTimer()">RESET</button>
+        </div>
+
       </div>
 
     </div>
   </div>
 
   <script>
-    // --- APP STATE & DOM ---
     const widget = document.getElementById('widget');
-    const core = document.getElementById('main-core');
-    const coreContainer = document.getElementById('core-container');
-    const appTitle = document.getElementById('app-title');
+    const uiContent = document.getElementById('ui-content');
     
-    // --- GESTURE LOGIC (The Joystick) ---
-    let isGesturing = false;
-    let startY = 0;
-
-    core.addEventListener('mousedown', (e) => {
-      isGesturing = true;
-      startY = e.clientY;
-      coreContainer.classList.add('gesturing');
-    });
-
-    window.addEventListener('mouseup', (e) => {
-      if (!isGesturing) return;
-      isGesturing = false;
-      coreContainer.classList.remove('gesturing');
-
-      const diffY = e.clientY - startY;
-      
-      if (diffY < -20) {
-        // Swiped UP
-        openApp('notes');
-      } else if (diffY > 20) {
-        // Swiped DOWN
-        openApp('timer');
-      } 
-      // If they just clicked without swiping, we do nothing to prevent accidental opens.
-    });
+    function toggleDial() {
+      if (!widget.classList.contains('collapsed')) return;
+      widget.classList.toggle('dial-active');
+    }
 
     function openApp(appId) {
-      widget.classList.remove('collapsed');
+      widget.classList.remove('collapsed', 'dial-active');
+      uiContent.style.display = 'flex';
       
-      // Hide all views
       document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      
-      // Show targeted view
       document.getElementById(`view-${appId}`).classList.add('active');
-      
-      // Update Title Bar
-      if(appId === 'notes') {
-        appTitle.innerText = '// SYS.NOTES';
-        appTitle.style.color = 'var(--neon)';
-      } else {
-        appTitle.innerText = '// SYS.TIMER';
-        appTitle.style.color = 'var(--cyan)';
-      }
     }
 
     function toggleCollapse() {
       widget.classList.add('collapsed');
+      widget.classList.remove('dial-active'); 
+      uiContent.style.display = 'none';
     }
 
     // --- NOTES LOGIC ---
@@ -283,52 +261,98 @@
     function purge() { tasks = []; saveAndRender(); }
     renderTasks();
 
-    // --- TIMER LOGIC ---
-    const timeDisplay = document.getElementById('timer-display');
-    let startTime;
-    let updatedTime;
-    let difference;
-    let tInterval;
-    let running = false;
-    let savedTime = 0; // To pause and resume
-
-    function updateTime() {
-      updatedTime = new Date().getTime();
-      difference =  updatedTime - startTime + savedTime;
+    // --- LIVE CLOCK LOGIC ---
+    function updateClock() {
+      const now = new Date();
+      let h = now.getHours();
+      let m = now.getMinutes();
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12; 
+      m = m < 10 ? '0' + m : m;
       
-      let minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-      let seconds = Math.floor((difference % (1000 * 60)) / 1000);
-      let milliseconds = Math.floor((difference % 1000) / 10); // get two digits
+      document.getElementById('time-display').innerText = `${h}:${m} ${ampm}`;
+      
+      const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+      const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+      document.getElementById('date-display').innerText = `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
 
-      minutes = (minutes < 10) ? "0" + minutes : minutes;
-      seconds = (seconds < 10) ? "0" + seconds : seconds;
-      milliseconds = (milliseconds < 10) ? "0" + milliseconds : milliseconds;
+    // --- COUNTDOWN & SVG RING LOGIC ---
+    const timerInput = document.getElementById('timer-input');
+    const setupContainer = document.getElementById('setup-container');
+    const countdownDisplay = document.getElementById('countdown-display');
+    const circle = document.getElementById('svg-ring');
+    
+    const radius = circle.r.baseVal.value;
+    const circumference = radius * 2 * Math.PI;
+    circle.style.strokeDasharray = `${circumference} ${circumference}`;
+    circle.style.strokeDashoffset = 0; 
 
-      timeDisplay.innerHTML = `${minutes}:${seconds}.${milliseconds}`;
+    let countdownInterval;
+    let totalSeconds = 0;
+    let remainingSeconds = 0;
+    let isRunning = false;
+
+    function formatTime(secs) {
+      let m = Math.floor(secs / 60);
+      let s = secs % 60;
+      m = m < 10 ? '0' + m : m;
+      s = s < 10 ? '0' + s : s;
+      return `${m}:${s}`;
+    }
+
+    function setRingProgress(percent) {
+      const offset = circumference - (percent * circumference);
+      circle.style.strokeDashoffset = offset;
     }
 
     function startTimer() {
-      if(!running){
-        startTime = new Date().getTime();
-        tInterval = setInterval(updateTime, 10); // Update every 10ms for smooth ms tracking
-        running = true;
-      }
-    }
+      if (isRunning) return; 
 
-    function stopTimer() {
-      if(running){
-        clearInterval(tInterval);
-        savedTime = difference;
-        running = false;
+      if (remainingSeconds === 0) {
+        let mins = parseInt(timerInput.value);
+        if (isNaN(mins) || mins <= 0) mins = 1;
+        totalSeconds = mins * 60;
+        remainingSeconds = totalSeconds;
       }
+
+      setupContainer.style.display = 'none';
+      countdownDisplay.style.display = 'block';
+      countdownDisplay.innerText = formatTime(remainingSeconds);
+      
+      isRunning = true;
+
+      countdownInterval = setInterval(() => {
+        remainingSeconds--;
+        
+        countdownDisplay.innerText = formatTime(remainingSeconds);
+        setRingProgress(remainingSeconds / totalSeconds);
+
+        if (remainingSeconds <= 0) {
+          clearInterval(countdownInterval);
+          isRunning = false;
+          countdownDisplay.innerText = "00:00";
+          // FIX: Added quotes around the CSS variable
+          circle.style.stroke = 'var(--danger)'; 
+        }
+      }, 1000);
     }
 
     function resetTimer() {
-      clearInterval(tInterval);
-      savedTime = 0;
-      difference = 0;
-      running = false;
-      timeDisplay.innerHTML = "00:00.00";
+      clearInterval(countdownInterval);
+      isRunning = false;
+      remainingSeconds = 0;
+      
+      setupContainer.style.display = 'block';
+      countdownDisplay.style.display = 'none';
+      
+      circle.style.stroke = 'var(--cyan)';
+      circle.style.transition = 'none'; 
+      setRingProgress(1); 
+      
+      setTimeout(() => { circle.style.transition = 'stroke-dashoffset 1s linear'; }, 50);
     }
   </script>
 </body>
