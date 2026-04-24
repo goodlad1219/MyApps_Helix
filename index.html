@@ -7,7 +7,9 @@
     :root {
       --bg: rgba(0, 0, 0, 0.45); 
       --neon: #00ff41;           
+      --neon-dim: rgba(0, 255, 65, 0.3);
       --danger: #ff003c;
+      --cyan: #00e5ff; /* Adding a secondary color for the timer */
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -18,16 +20,14 @@
       overflow: hidden;
       height: 100vh;
       background: transparent; 
-      /* Removed Flexbox centering so we can anchor the widget manually */
       position: relative; 
     }
 
-    /* --- CYBERPUNK SCROLLBARS --- */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: rgba(0, 255, 65, 0.1); }
     ::-webkit-scrollbar-thumb { background: var(--neon); border-radius: 3px; }
 
-    /* --- THE WIDGET --- */
+    /* --- THE WIDGET BASE --- */
     #widget {
       background: var(--bg);
       backdrop-filter: blur(12px);         
@@ -35,156 +35,225 @@
       border: 1px solid rgba(0, 255, 65, 0.3); 
       box-shadow: 0 0 15px rgba(0, 255, 65, 0.2), inset 0 0 10px rgba(0, 255, 65, 0.1);
       border-radius: 8px;
-      
-      /* THE MAGIC ANCHOR: Locks the bottom-left corner in place */
       position: absolute;
       bottom: 10px; 
-      right: 10px;
-      
+      right: 10px; 
       width: 300px;
       height: 380px;
       display: flex;
       flex-direction: column;
-      
-      /* The transition animates the width/height growing upward and rightward */
       transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
-    /* Collapsed State Class */
+    /* --- COLLAPSED STATE (THE ORB) --- */
     #widget.collapsed {
       width: 60px;
       height: 60px;
       border-radius: 50%;
-      overflow: hidden;
       border: 2px solid var(--neon);
       box-shadow: 0 0 20px var(--neon);
     }
 
-    #drag-bar {
-      -webkit-app-region: drag; 
-      background: rgba(0, 255, 65, 0.15);
-      padding: 8px 10px;
-      display: flex;
-      justify-content: space-between;
-      border-bottom: 1px solid rgba(0, 255, 65, 0.3);
-    }
-    
-    .btn {
-      -webkit-app-region: no-drag; 
-      background: none;
-      border: none;
-      color: var(--neon);
-      cursor: pointer;
-      font-family: inherit;
-      font-weight: bold;
-      transition: 0.2s;
-    }
-    .btn:hover { text-shadow: 0 0 8px var(--neon); }
-    .btn.close:hover { color: var(--danger); text-shadow: 0 0 8px var(--danger); }
-
-    /* --- THE CORE --- */
-    #core {
+    /* --- HOLOGRAPHIC JOYSTICK UI --- */
+    #core-container {
       display: none;
-      width: 100%; 
-      height: 100%;
-      justify-content: center; 
-      align-items: center;
-      -webkit-app-region: drag; 
+      width: 100%; height: 100%;
+      position: relative;
+      justify-content: center; align-items: center;
+      -webkit-app-region: drag; /* Outer edge drags the window */
     }
     
+    #widget.collapsed #core-container { display: flex; }
+    #widget.collapsed #ui-content { display: none; }
+
     .solid-core {
       -webkit-app-region: no-drag; 
       pointer-events: auto; 
-      width: 24px;
-      height: 24px;
+      width: 24px; height: 24px;
       background-color: var(--neon);
       border-radius: 50%;
       box-shadow: 0 0 15px var(--neon);
       cursor: pointer;
       transition: all 0.2s ease-in-out;
+      z-index: 10;
     }
+    .solid-core:hover { transform: scale(1.15); }
 
-    .solid-core:hover {
-      transform: scale(1.15);
-      box-shadow: 0 0 25px var(--neon), 0 0 40px var(--neon);
-      background-color: #33ff66;
+    /* The projected holograms that appear when you click and hold */
+    .hologram {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      font-weight: bold;
+      color: var(--cyan);
+      text-shadow: 0 0 5px var(--cyan);
+      opacity: 0;
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
     }
+    #holo-top { top: -20px; }
+    #holo-bottom { bottom: -20px; }
 
-    #widget.collapsed #core { display: flex; }
-    #widget.collapsed #ui-content { display: none; }
+    /* When the user clicks and holds the core */
+    #core-container.gesturing .hologram { opacity: 1; }
+    #core-container.gesturing #holo-top { transform: translate(-50%, -10px); }
+    #core-container.gesturing #holo-bottom { transform: translate(-50%, 10px); }
+    #core-container.gesturing .solid-core { transform: scale(0.8); background-color: var(--cyan); box-shadow: 0 0 20px var(--cyan); }
 
+    /* --- EXPANDED UI --- */
     #ui-content { flex: 1; display: flex; flex-direction: column; padding: 10px; overflow: hidden; }
 
-    #task-list {
-      flex: 1;
-      overflow-y: auto; 
-      list-style: none;
-      margin-bottom: 10px;
-      padding-right: 5px; 
-    }
-
-    #task-list li {
-      padding: 5px 0;
-      border-bottom: 1px dashed rgba(0, 255, 65, 0.3);
-      word-wrap: break-word;
-      cursor: crosshair;
-    }
-    #task-list li:hover { background: rgba(0, 255, 65, 0.1); }
-
-    textarea {
-      background: rgba(0, 0, 0, 0.3); 
-      border: 1px solid rgba(0, 255, 65, 0.5);
-      color: var(--neon);
-      font-family: inherit;
-      resize: none;
-      padding: 8px;
-      outline: none;
-      border-radius: 4px;
-    }
-    textarea:focus { 
-      box-shadow: 0 0 8px rgba(0, 255, 65, 0.4); 
-      border-color: var(--neon);
-    }
-
-    .status-bar {
+    #drag-bar {
+      -webkit-app-region: drag; 
+      background: rgba(0, 255, 65, 0.15);
+      padding: 8px 10px;
       display: flex; justify-content: space-between;
-      font-size: 12px; margin-top: 8px; opacity: 0.8;
+      border-bottom: 1px solid rgba(0, 255, 65, 0.3);
     }
+    
+    .btn {
+      -webkit-app-region: no-drag; background: none; border: none;
+      color: var(--neon); cursor: pointer; font-family: inherit; font-weight: bold; transition: 0.2s;
+    }
+    .btn:hover { text-shadow: 0 0 8px var(--neon); }
+    .btn.close:hover { color: var(--danger); text-shadow: 0 0 8px var(--danger); }
+
+    /* View Switcher */
+    .view { display: none; flex-direction: column; flex: 1; overflow: hidden; margin-top: 10px; }
+    .view.active { display: flex; }
+
+    /* --- VIEW: TODO / NOTES --- */
+    #task-list { flex: 1; overflow-y: auto; list-style: none; padding-right: 5px; }
+    #task-list li { padding: 5px 0; border-bottom: 1px dashed var(--neon-dim); word-wrap: break-word; cursor: crosshair; }
+    #task-list li:hover { background: rgba(0, 255, 65, 0.1); }
+    
+    textarea {
+      background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 65, 0.5);
+      color: var(--neon); font-family: inherit; resize: none; padding: 8px; outline: none; border-radius: 4px; margin-top:10px;
+    }
+    textarea:focus { box-shadow: 0 0 8px rgba(0, 255, 65, 0.4); border-color: var(--neon); }
+
+    /* --- VIEW: TIMER --- */
+    #timer-display {
+      font-size: 48px; text-align: center; margin: auto 0;
+      color: var(--cyan); text-shadow: 0 0 15px var(--cyan);
+      letter-spacing: 2px;
+    }
+    .timer-controls { display: flex; justify-content: space-around; margin-bottom: 20px; }
+    .btn-timer {
+      padding: 8px 15px; border: 1px solid var(--cyan); background: transparent; color: var(--cyan);
+      cursor: pointer; font-family: inherit; font-weight: bold; border-radius: 4px;
+    }
+    .btn-timer:hover { background: rgba(0, 229, 255, 0.2); box-shadow: 0 0 10px var(--cyan); }
+
+    .status-bar { display: flex; justify-content: space-between; font-size: 12px; margin-top: 8px; opacity: 0.8; }
   </style>
 </head>
 <body>
 
   <div id="widget" class="collapsed">
     
-    <div id="core">
-      <div class="solid-core" ondblclick="toggleCollapse()"></div>
+    <div id="core-container">
+      <div id="holo-top" class="hologram">[^] NOTES</div>
+      <div class="solid-core" id="main-core"></div>
+      <div id="holo-bottom" class="hologram">[v] TIMER</div>
     </div>
 
     <div id="ui-content">
       <div id="drag-bar">
-        <span>// SYS.TRACKER</span>
+        <span id="app-title">// SYS.NOTES</span>
         <div>
           <button class="btn" onclick="toggleCollapse()">[-]</button>
           <button class="btn close" onclick="window.close()">[X]</button>
         </div>
       </div>
 
-      <ul id="task-list"></ul>
-
-      <textarea id="task-input" rows="2" placeholder="> input_task_"></textarea>
-
-      <div class="status-bar">
-        <button class="btn" onclick="purge()">[PURGE]</button>
-        <span>STATUS: ONLINE</span>
+      <div id="view-notes" class="view active">
+        <ul id="task-list"></ul>
+        <textarea id="task-input" rows="2" placeholder="> input_data_"></textarea>
+        <div class="status-bar">
+          <button class="btn" onclick="purge()">[PURGE]</button>
+          <span>STATUS: ONLINE</span>
+        </div>
       </div>
+
+      <div id="view-timer" class="view">
+        <div id="timer-display">00:00.00</div>
+        <div class="timer-controls">
+          <button class="btn-timer" onclick="startTimer()">START</button>
+          <button class="btn-timer" onclick="stopTimer()">STOP</button>
+          <button class="btn-timer" onclick="resetTimer()">RESET</button>
+        </div>
+        <div class="status-bar">
+          <span>// CHRONO_SYS</span>
+          <span style="color:var(--cyan)">STANDBY</span>
+        </div>
+      </div>
+
     </div>
   </div>
 
   <script>
+    // --- APP STATE & DOM ---
+    const widget = document.getElementById('widget');
+    const core = document.getElementById('main-core');
+    const coreContainer = document.getElementById('core-container');
+    const appTitle = document.getElementById('app-title');
+    
+    // --- GESTURE LOGIC (The Joystick) ---
+    let isGesturing = false;
+    let startY = 0;
+
+    core.addEventListener('mousedown', (e) => {
+      isGesturing = true;
+      startY = e.clientY;
+      coreContainer.classList.add('gesturing');
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (!isGesturing) return;
+      isGesturing = false;
+      coreContainer.classList.remove('gesturing');
+
+      const diffY = e.clientY - startY;
+      
+      if (diffY < -20) {
+        // Swiped UP
+        openApp('notes');
+      } else if (diffY > 20) {
+        // Swiped DOWN
+        openApp('timer');
+      } 
+      // If they just clicked without swiping, we do nothing to prevent accidental opens.
+    });
+
+    function openApp(appId) {
+      widget.classList.remove('collapsed');
+      
+      // Hide all views
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      
+      // Show targeted view
+      document.getElementById(`view-${appId}`).classList.add('active');
+      
+      // Update Title Bar
+      if(appId === 'notes') {
+        appTitle.innerText = '// SYS.NOTES';
+        appTitle.style.color = 'var(--neon)';
+      } else {
+        appTitle.innerText = '// SYS.TIMER';
+        appTitle.style.color = 'var(--cyan)';
+      }
+    }
+
+    function toggleCollapse() {
+      widget.classList.add('collapsed');
+    }
+
+    // --- NOTES LOGIC ---
     const input = document.getElementById('task-input');
     const list = document.getElementById('task-list');
-    const widget = document.getElementById('widget');
-
     let tasks = JSON.parse(localStorage.getItem('neural_tasks')) || [];
 
     function renderTasks() {
@@ -192,10 +261,7 @@
       tasks.forEach((task, index) => {
         const li = document.createElement('li');
         li.innerText = `[++] ${task}`;
-        li.ondblclick = () => {
-          tasks.splice(index, 1);
-          saveAndRender();
-        };
+        li.ondblclick = () => { tasks.splice(index, 1); saveAndRender(); };
         list.appendChild(li);
       });
       list.scrollTop = list.scrollHeight; 
@@ -210,24 +276,60 @@
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         const text = input.value.trim();
-        if (text) {
-          tasks.push(text);
-          input.value = '';
-          saveAndRender();
-        }
+        if (text) { tasks.push(text); input.value = ''; saveAndRender(); }
       }
     });
 
-    function purge() {
-      tasks = [];
-      saveAndRender();
-    }
-
-    function toggleCollapse() {
-      widget.classList.toggle('collapsed');
-    }
-
+    function purge() { tasks = []; saveAndRender(); }
     renderTasks();
+
+    // --- TIMER LOGIC ---
+    const timeDisplay = document.getElementById('timer-display');
+    let startTime;
+    let updatedTime;
+    let difference;
+    let tInterval;
+    let running = false;
+    let savedTime = 0; // To pause and resume
+
+    function updateTime() {
+      updatedTime = new Date().getTime();
+      difference =  updatedTime - startTime + savedTime;
+      
+      let minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      let seconds = Math.floor((difference % (1000 * 60)) / 1000);
+      let milliseconds = Math.floor((difference % 1000) / 10); // get two digits
+
+      minutes = (minutes < 10) ? "0" + minutes : minutes;
+      seconds = (seconds < 10) ? "0" + seconds : seconds;
+      milliseconds = (milliseconds < 10) ? "0" + milliseconds : milliseconds;
+
+      timeDisplay.innerHTML = `${minutes}:${seconds}.${milliseconds}`;
+    }
+
+    function startTimer() {
+      if(!running){
+        startTime = new Date().getTime();
+        tInterval = setInterval(updateTime, 10); // Update every 10ms for smooth ms tracking
+        running = true;
+      }
+    }
+
+    function stopTimer() {
+      if(running){
+        clearInterval(tInterval);
+        savedTime = difference;
+        running = false;
+      }
+    }
+
+    function resetTimer() {
+      clearInterval(tInterval);
+      savedTime = 0;
+      difference = 0;
+      running = false;
+      timeDisplay.innerHTML = "00:00.00";
+    }
   </script>
 </body>
 </html>
