@@ -7,12 +7,22 @@
     "start": "electron .",
     "build": "electron-builder --win"
   },
-  "author": "You",
+  "author": "GoodLad1219",
   "license": "ISC",
   "build": {
-    "appId": "com.cyber.neural",
+    "appId": "com.goodlad1219.Hellix",
+    "productName": "Hellix Widget",
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "asset/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
     }
+  },
+  "devDependencies": {
+    "electron": "^41.3.0",
+    "electron-builder": "^26.8.1"
   }
 }

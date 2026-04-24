@@ -6,10 +6,9 @@
 
     :root {
       --neon: #00ff41;           
-      --neon-dim: rgba(0, 255, 65, 0.3);
+      --neon-dim: rgba(0, 255, 65, 0.2);
       --danger: #ff003c;
       --cyan: #00e5ff; 
-      --cyan-dim: rgba(0, 229, 255, 0.2);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -32,15 +31,24 @@
       background: transparent; 
       position: absolute;
       bottom: 10px; right: 10px; 
-      width: 320px; height: 420px;
+      width: 380px; height: 480px; /* Kept large so shadows and shapes don't clip */
       display: flex; flex-direction: column;
       justify-content: center; align-items: center;
       transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
-    /* --- IDLE STATE (THE CORE) --- */
+    /* --- IDLE & DIAL STATES (THE OMNITRIX CORE) --- */
     #widget.collapsed { width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--neon); box-shadow: 0 0 20px var(--neon); }
-    #widget.collapsed.dial-active { width: 150px; height: 150px; border: 2px solid var(--cyan); box-shadow: 0 0 30px var(--cyan); background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
+    #widget.collapsed.dial-active { width: 150px; height: 150px; border: 2px solid var(--neon); box-shadow: 0 0 30px var(--neon); background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
+
+    /* --- ALARM STATE --- */
+    @keyframes pulse-red-orb {
+      0% { border-color: var(--danger); box-shadow: 0 0 30px var(--danger); }
+      50% { border-color: #550000; box-shadow: 0 0 5px var(--danger); }
+      100% { border-color: var(--danger); box-shadow: 0 0 30px var(--danger); }
+    }
+    #widget.collapsed.timer-alarm { animation: pulse-red-orb 1s infinite; }
+    #widget.collapsed.timer-alarm #omnitrix-core { background: var(--danger); box-shadow: 0 0 20px var(--danger); }
 
     /* Drag Ring & Core */
     #omnitrix-casing { position: absolute; inset: 0; border: 15px solid rgba(0, 255, 65, 0.1); border-radius: 50%; -webkit-app-region: drag; z-index: 1; display: none; }
@@ -51,32 +59,37 @@
       position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
       width: 24px; height: 24px; border-radius: 50%; background: var(--neon); box-shadow: 0 0 15px var(--neon);
       -webkit-app-region: no-drag; z-index: 10; cursor: pointer; display: none; pointer-events: auto; 
+      transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
     }
     #widget.collapsed #omnitrix-core { display: block; }
-    #omnitrix-core:hover { transform: translate(-50%, -50%) scale(1.2); background: #fff; }
-    #widget.collapsed.dial-active #omnitrix-core { background: var(--cyan); box-shadow: 0 0 25px var(--cyan); transform: translate(-50%, -50%) scale(0.8); }
+    #omnitrix-core:hover { transform: translate(-50%, -50%) scale(1.2); }
+    #widget.collapsed.dial-active #omnitrix-core { background: #fff; box-shadow: 0 0 25px #fff; transform: translate(-50%, -50%) scale(0.8); }
 
-    /* Dial Menu */
+    /* Dial Menu Quadrants */
     #dial-menu { position: absolute; inset: 0; z-index: 5; display: none; flex-direction: column; border-radius: 50%; overflow: hidden; animation: spin-in 0.3s ease-out forwards; }
     #widget.collapsed.dial-active #dial-menu { display: flex; }
     @keyframes spin-in { 0% { transform: rotate(-90deg) scale(0.5); opacity: 0; } 100% { transform: rotate(0deg) scale(1); opacity: 1; } }
 
-    .quadrant { flex: 1; display: flex; justify-content: center; align-items: center; font-size: 14px; font-weight: bold; color: rgba(255,255,255,0.7); transition: 0.2s; border: 1px solid rgba(0, 229, 255, 0.2); -webkit-app-region: no-drag; cursor: pointer; }
-    .quadrant:hover { background: rgba(0, 229, 255, 0.3); color: var(--cyan); text-shadow: 0 0 10px var(--cyan); box-shadow: inset 0 0 20px var(--cyan); }
+    .quadrant { flex: 1; display: flex; justify-content: center; align-items: center; font-size: 14px; font-weight: bold; color: rgba(255,255,255,0.7); transition: 0.2s; border: 1px solid rgba(0, 255, 65, 0.2); -webkit-app-region: no-drag; cursor: pointer; }
+    .quadrant:hover { background: rgba(0, 255, 65, 0.3); color: var(--neon); text-shadow: 0 0 10px var(--neon); box-shadow: inset 0 0 20px var(--neon); }
 
     /* --- EXPANDED UI VIEWS --- */
     #ui-content { width: 100%; height: 100%; display: none; flex-direction: column; }
     #widget.collapsed #ui-content { display: none; }
-
-    .view { display: none; width: 100%; height: 100%; flex-direction: column; }
-    .view.active { display: flex; }
-
-    .btn { -webkit-app-region: no-drag; background: none; border: none; color: inherit; cursor: pointer; font-family: inherit; font-weight: bold; transition: 0.2s; }
+    
+    .view { display: none; } /* Views are hidden by default */
+    .btn { -webkit-app-region: no-drag; background: none; border: none; color: inherit; cursor: pointer; font-family: inherit; font-weight: bold; transition: 0.2s; outline: none; }
     .btn:hover { text-shadow: 0 0 8px currentColor; }
 
     /* =========================================
        VIEW 1: RECTANGULAR NOTES HUD 
        ========================================= */
+    #view-notes.active { 
+      display: flex; flex-direction: column; 
+      width: 320px; height: 420px; 
+      margin: auto; 
+    }
+    
     #drag-bar-notes {
       -webkit-app-region: drag; background: rgba(0, 0, 0, 0.6); border-radius: 4px; padding: 8px 10px;
       display: flex; justify-content: space-between; border: 1px solid var(--neon-dim); margin-bottom: 10px; color: var(--neon);
@@ -92,49 +105,86 @@
     
     .status-bar { display: flex; justify-content: space-between; font-size: 12px; margin-top: 8px; background: rgba(0,0,0,0.6); padding: 5px 10px; border-radius: 4px; }
 
+
     /* =========================================
-       VIEW 2: CIRCULAR COUNTDOWN & CLOCK HUD
+       VIEW 2: PERFECT CIRCULAR TIMER HUD
        ========================================= */
-    #view-timer {
-      -webkit-app-region: drag; 
+    #view-timer.active {
+      display: flex; justify-content: center; align-items: center;
+      width: 360px; height: 360px; margin: auto; flex: none;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 100%);
-      border: 2px solid var(--cyan-dim);
-      box-shadow: 0 0 30px rgba(0, 229, 255, 0.1);
-      position: relative;
-      align-items: center; justify-content: center;
-      color: var(--cyan);
+      background: radial-gradient(circle, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 100%);
+      border: 1px solid rgba(0, 255, 65, 0.15); 
+      box-shadow: 0 0 40px rgba(0, 255, 65, 0.05); 
+      position: relative; overflow: hidden; -webkit-app-region: drag; 
     }
 
-    .circle-controls { position: absolute; width: 100%; top: 25px; display: flex; justify-content: space-between; padding: 0 45px; z-index: 10; }
+    .circle-controls { 
+      position: absolute; width: 100%; top: 30px; 
+      display: flex; justify-content: space-between; padding: 0 80px; z-index: 10; 
+    }
     .circle-controls .btn:hover { color: var(--danger); }
 
-    .live-clock { position: absolute; top: 60px; text-align: center; -webkit-app-region: no-drag; }
-    #time-display { font-size: 24px; font-weight: bold; letter-spacing: 2px; text-shadow: 0 0 10px var(--cyan); }
-    #date-display { font-size: 10px; opacity: 0.8; letter-spacing: 1px; }
+    .timer-ring-container { 
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 280px; height: 280px;
+      display: flex; justify-content: center; align-items: center; z-index: 5;
+    }
+    
+    .progress-ring { position: absolute; transform: rotate(-90deg); }
+    .progress-ring__track { stroke: rgba(0, 255, 65, 0.1); }
+    .progress-ring__circle { stroke: var(--neon); stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
 
-    .timer-ring-container { position: relative; width: 180px; height: 180px; margin-top: 30px; display: flex; justify-content: center; align-items: center; }
-    .progress-ring { transform: rotate(-90deg); position: absolute; }
-    .progress-ring__track { stroke: var(--cyan-dim); }
-    .progress-ring__circle { 
-      stroke: var(--cyan); 
-      stroke-linecap: round;
-      transition: stroke-dashoffset 1s linear; 
+    .timer-inner { 
+      position: relative; z-index: 20; 
+      display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+      height: 200px; 
+      -webkit-app-region: no-drag; 
     }
 
-    .timer-inner { position: absolute; text-align: center; -webkit-app-region: no-drag; z-index: 20; }
+    /* Live Clock */
+    .live-clock { display: flex; flex-direction: column; align-items: center; }
+    #time-display { font-size: 22px; font-weight: bold; letter-spacing: 2px; text-shadow: 0 0 8px var(--neon); }
+    #date-display { font-size: 11px; opacity: 0.7; letter-spacing: 1.5px; margin-top: 2px; }
+
+    /* Custom Stepper Input */
+    #setup-container { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .arrow-btn { 
+      background: none; border: none; color: var(--neon); opacity: 0.5; 
+      cursor: pointer; padding: 5px; transition: 0.2s; display: flex; align-items: center; justify-content: center;
+    }
+    .arrow-btn:hover { opacity: 1; transform: scale(1.2); text-shadow: 0 0 10px var(--neon); }
+    .arrow-btn svg { width: 18px; height: 18px; fill: currentColor; }
+
     #timer-input { 
-      background: transparent; border: none; border-bottom: 1px dashed var(--cyan);
-      color: #fff; font-family: inherit; font-size: 28px; width: 60px; text-align: center; outline: none;
+      background: transparent; border: none; color: #fff; 
+      font-family: inherit; font-size: 42px; width: 80px; text-align: center; outline: none; 
+      font-weight: bold; text-shadow: 0 0 10px rgba(255,255,255,0.3);
     }
     #timer-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-    .input-label { font-size: 10px; opacity: 0.7; margin-top: 5px; }
     
-    #countdown-display { font-size: 36px; font-weight: bold; text-shadow: 0 0 15px var(--cyan); display: none; }
+    /* Countdown Display */
+    @keyframes flash-text {
+      0% { color: var(--danger); text-shadow: 0 0 20px var(--danger); }
+      50% { color: #fff; text-shadow: none; }
+      100% { color: var(--danger); text-shadow: 0 0 20px var(--danger); }
+    }
+    #countdown-display { 
+      font-size: 48px; font-weight: bold; text-shadow: 0 0 15px var(--neon); 
+      display: none; cursor: default; transition: 0.2s; line-height: 1; margin: 15px 0;
+    }
+    #countdown-display.alarm-active { animation: flash-text 1s infinite; cursor: pointer; }
+    #countdown-display.alarm-active:hover { transform: scale(1.05); }
 
-    .timer-actions { position: absolute; bottom: 40px; display: flex; gap: 15px; -webkit-app-region: no-drag; z-index: 20; }
-    .action-btn { background: transparent; border: 1px solid var(--cyan); color: var(--cyan); padding: 5px 15px; border-radius: 20px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: bold; transition: 0.2s; }
-    .action-btn:hover { background: var(--cyan-dim); box-shadow: 0 0 10px var(--cyan); }
+    /* SVG Icon Actions */
+    .timer-actions { display: flex; gap: 25px; margin-top: 5px;}
+    .icon-btn { 
+      background: none; border: none; color: var(--neon); opacity: 0.7;
+      cursor: pointer; transition: 0.2s; outline: none;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .icon-btn svg { width: 22px; height: 22px; fill: currentColor; }
+    .icon-btn:hover { opacity: 1; transform: scale(1.15); filter: drop-shadow(0 0 8px var(--neon)); }
 
   </style>
 </head>
@@ -149,7 +199,7 @@
       <div class="quadrant" onclick="openApp('timer')">TIMER</div>
     </div>
 
-    <div id="omnitrix-core" onclick="toggleDial()"></div>
+    <div id="omnitrix-core" onclick="handleCoreClick()"></div>
 
     <div id="ui-content">
 
@@ -176,33 +226,46 @@
           <button class="btn" onclick="window.close()">[X]</button>
         </div>
 
-        <div class="live-clock">
-          <div id="time-display">00:00 AM</div>
-          <div id="date-display">LOADING...</div>
-        </div>
-
         <div class="timer-ring-container">
-          <svg class="progress-ring" width="180" height="180">
-            <circle class="progress-ring__track" stroke-width="6" fill="transparent" r="84" cx="90" cy="90"/>
-            <circle class="progress-ring__circle" id="svg-ring" stroke-width="6" fill="transparent" r="84" cx="90" cy="90"/>
+          <svg class="progress-ring" width="280" height="280">
+            <circle class="progress-ring__track" stroke-width="4" fill="transparent" r="130" cx="140" cy="140"/>
+            <circle class="progress-ring__circle" id="svg-ring" stroke-width="4" fill="transparent" r="130" cx="140" cy="140"/>
           </svg>
           
           <div class="timer-inner">
-            <div id="setup-container">
-              <input type="number" id="timer-input" value="5" min="1" max="99">
-              <div class="input-label">MINUTES</div>
+            
+            <div class="live-clock">
+              <div id="time-display">00:00 AM</div>
+              <div id="date-display">LOADING...</div>
             </div>
-            <div id="countdown-display">05:00</div>
+
+            <div id="setup-container">
+              <button class="arrow-btn" onclick="adjustTime(1)">
+                <svg viewBox="0 0 24 24"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
+              </button>
+              
+              <input type="number" id="timer-input" value="5" min="1" max="99">
+              
+              <button class="arrow-btn" onclick="adjustTime(-1)">
+                <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+              </button>
+            </div>
+            
+            <div id="countdown-display" onclick="stopAlarm()">05:00</div>
+
+            <div class="timer-actions">
+              <button class="icon-btn" onclick="startTimer()" title="Start">
+                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              </button>
+              <button class="icon-btn" onclick="resetTimer()" title="Reset">
+                <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+              </button>
+            </div>
+
           </div>
         </div>
 
-        <div class="timer-actions">
-          <button class="action-btn" onclick="startTimer()">START</button>
-          <button class="action-btn" onclick="resetTimer()">RESET</button>
-        </div>
-
       </div>
-
     </div>
   </div>
 
@@ -210,6 +273,20 @@
     const widget = document.getElementById('widget');
     const uiContent = document.getElementById('ui-content');
     
+    let isAlarmRinging = false;
+
+    // --- OMNITRIX & VIEW LOGIC ---
+    function handleCoreClick() {
+      // If the alarm is ringing, clicking the red core instantly opens the timer
+      if (isAlarmRinging) {
+        stopAlarm();
+        openApp('timer');
+      } else {
+        // Otherwise, pop the dial menu
+        toggleDial();
+      }
+    }
+
     function toggleDial() {
       if (!widget.classList.contains('collapsed')) return;
       widget.classList.toggle('dial-active');
@@ -219,6 +296,7 @@
       widget.classList.remove('collapsed', 'dial-active');
       uiContent.style.display = 'flex';
       
+      // Hide all views, then show the requested one
       document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
       document.getElementById(`view-${appId}`).classList.add('active');
     }
@@ -295,6 +373,19 @@
     let remainingSeconds = 0;
     let isRunning = false;
 
+    // Custom Input Stepper Logic
+    function adjustTime(amount) {
+      if (isRunning) return;
+      let currentVal = parseInt(timerInput.value);
+      if (isNaN(currentVal)) currentVal = 1;
+      
+      let newVal = currentVal + amount;
+      if (newVal < 1) newVal = 1;
+      if (newVal > 99) newVal = 99;
+      
+      timerInput.value = newVal;
+    }
+
     function formatTime(secs) {
       let m = Math.floor(secs / 60);
       let s = secs % 60;
@@ -309,7 +400,7 @@
     }
 
     function startTimer() {
-      if (isRunning) return; 
+      if (isRunning || isAlarmRinging) return; 
 
       if (remainingSeconds === 0) {
         let mins = parseInt(timerInput.value);
@@ -331,24 +422,44 @@
         setRingProgress(remainingSeconds / totalSeconds);
 
         if (remainingSeconds <= 0) {
-          clearInterval(countdownInterval);
-          isRunning = false;
-          countdownDisplay.innerText = "00:00";
-          // FIX: Added quotes around the CSS variable
-          circle.style.stroke = 'var(--danger)'; 
+          triggerAlarm();
         }
       }, 1000);
     }
 
+    function triggerAlarm() {
+      clearInterval(countdownInterval);
+      isRunning = false;
+      isAlarmRinging = true;
+      
+      countdownDisplay.innerText = "TIME\nOVER"; 
+      countdownDisplay.classList.add('alarm-active');
+      circle.style.stroke = 'var(--danger)'; 
+      
+      widget.classList.add('timer-alarm');
+    }
+
+    function stopAlarm() {
+      if (!isAlarmRinging) return;
+      isAlarmRinging = false;
+      
+      countdownDisplay.classList.remove('alarm-active');
+      widget.classList.remove('timer-alarm');
+      
+      resetTimer();
+    }
+
     function resetTimer() {
+      if (isAlarmRinging) stopAlarm();
+      
       clearInterval(countdownInterval);
       isRunning = false;
       remainingSeconds = 0;
       
-      setupContainer.style.display = 'block';
+      setupContainer.style.display = 'flex';
       countdownDisplay.style.display = 'none';
       
-      circle.style.stroke = 'var(--cyan)';
+      circle.style.stroke = 'var(--neon)';
       circle.style.transition = 'none'; 
       setRingProgress(1); 
       
