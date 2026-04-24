@@ -16,11 +16,10 @@
       font-family: 'Share Tech Mono', monospace;
       color: var(--neon);
       overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
       height: 100vh;
       background: transparent; 
+      /* Removed Flexbox centering so we can anchor the widget manually */
+      position: relative; 
     }
 
     /* --- CYBERPUNK SCROLLBARS --- */
@@ -36,12 +35,19 @@
       border: 1px solid rgba(0, 255, 65, 0.3); 
       box-shadow: 0 0 15px rgba(0, 255, 65, 0.2), inset 0 0 10px rgba(0, 255, 65, 0.1);
       border-radius: 8px;
+      
+      /* THE MAGIC ANCHOR: Locks the bottom-left corner in place */
+      position: absolute;
+      bottom: 10px; 
+      right: 10px;
+      
       width: 300px;
       height: 380px;
       display: flex;
       flex-direction: column;
+      
+      /* The transition animates the width/height growing upward and rightward */
       transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      position: relative;
     }
 
     /* Collapsed State Class */
@@ -76,7 +82,7 @@
     .btn:hover { text-shadow: 0 0 8px var(--neon); }
     .btn.close:hover { color: var(--danger); text-shadow: 0 0 8px var(--danger); }
 
-    /* --- THE CORE (Fixed) --- */
+    /* --- THE CORE --- */
     #core {
       display: none;
       width: 100%; 
@@ -88,7 +94,7 @@
     
     .solid-core {
       -webkit-app-region: no-drag; 
-      pointer-events: auto; /* Forces Electron to see the mouse clicks */
+      pointer-events: auto; 
       width: 24px;
       height: 24px;
       background-color: var(--neon);
