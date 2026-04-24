@@ -1,0 +1,18 @@
+{
+  "name": "myapps-helix",
+  "version": "1.0.0",
+  "description": "Cyberpunk To-Do Widget",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win"
+  },
+  "author": "You",
+  "license": "ISC",
+  "build": {
+    "appId": "com.cyber.neural",
+    "win": {
+      "target": "nsis"
+    }
+  }
+}
